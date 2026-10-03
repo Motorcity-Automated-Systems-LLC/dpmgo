@@ -110,7 +110,7 @@ function Index() {
 
 function StationDetails({ station }: { station: Station }) {
   const number = peopleMoverStations.indexOf(station) + 1;
-  const next = peopleMoverStations[number % peopleMoverStations.length];
+  const next = peopleMoverStations[number % peopleMoverStations.length] ?? station;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.coordinate[1]},${station.coordinate[0]}`;
   return <div className="detail-content">
     <DrawerHeader className="detail-heading"><div className="drawer-eyebrow"><span className="signal-dot" /> PEOPLE MOVER <span className="detail-divider">/</span> STATION {String(number).padStart(2, '0')}</div><DrawerTitle>{station.name}</DrawerTitle><DrawerDescription>{station.neighborhood}, Detroit</DrawerDescription></DrawerHeader>
