@@ -67,7 +67,7 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
         map.addLayer({ id, type: 'circle', source: id, paint: { 'circle-radius': 7, 'circle-color': color, 'circle-stroke-color': '#07131b', 'circle-stroke-width': 2 } });
       }
       map.on('click', 'station-pins', e => {
-        const id = e.features?.[0]?.properties?.id;
+        const id = e.features?.[0]?.properties?.['id'];
         if (typeof id === 'string') onSelectRef.current(id);
       });
       map.on('mouseenter', 'station-pins', () => { map.getCanvas().style.cursor = 'pointer'; });
