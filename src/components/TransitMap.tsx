@@ -86,8 +86,10 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
       for (const id of ['mover-line', 'station-halo', 'station-pins', 'station-labels', 'mover-vehicle', 'mover-vehicle-glow']) map.setLayoutProperty(id, 'visibility', enabledRef.current.peopleMover ? 'visible' : 'none');
       for (const id of ['qline-line', 'qline-stops', 'qline-vehicle', 'qline-vehicle-glow']) map.setLayoutProperty(id, 'visibility', enabledRef.current.qline ? 'visible' : 'none');
     });
+    const resetView = () => map.flyTo({ center: [-83.0458, 42.3314], zoom: 15.5, pitch: 50, bearing: -20, duration: 900 });
+    window.addEventListener('dpm-map-reset', resetView);
     map.on('error', e => { console.warn('Mapbox map error:', e.error); });
-    return () => { cancelAnimationFrame(frame); map.remove(); mapRef.current = null; };
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('dpm-map-reset', resetView); map.remove(); mapRef.current = null; };
   }, []);
 
   useEffect(() => {
