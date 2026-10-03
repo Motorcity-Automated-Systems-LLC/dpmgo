@@ -62,3 +62,7 @@ h1 { margin: 22px 0 14px; font-size: clamp(42px, 4.4vw, 75px); line-height: 1.02
   .map-controls { bottom: 220px; }
   .map-legend { bottom: 139px; }
 }
+.detail-stats > div:first-child { min-width: 0; }
+.detail-stats > div:first-child strong { display: flex; flex-wrap: wrap; gap: 3px; align-items: baseline; }
+.detail-stats > div:first-child span { line-height: 1.4; }
+@media (max-width: 700px) { .detail-stats { grid-template-columns: 1.35fr 1.15fr 1fr; } .detail-stats > div:first-child span { font-size: 8px; } }
