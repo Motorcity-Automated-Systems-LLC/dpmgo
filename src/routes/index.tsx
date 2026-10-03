@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useState, type ComponentType } from 'react';
-import { ArrowDownRight, ArrowRight, ChevronDown, Clock3, Compass, ExternalLink, Layers3, LocateFixed, MapPin, Navigation2, Radio, Route as RouteIcon, Search, X } from 'lucide-react';
+import { ArrowDownRight, ArrowRight, ChevronDown, Clock3, Compass, ExternalLink, Layers3, LocateFixed, MapPin, Navigation2, Radio, Route as RouteIcon, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -112,12 +112,19 @@ function StationDetails({ station }: { station: Station }) {
   const number = peopleMoverStations.indexOf(station) + 1;
   const next = peopleMoverStations[number % peopleMoverStations.length] ?? station;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.coordinate[1]},${station.coordinate[0]}`;
+  // Straight-line distance from Campus Martius, adjusted for a typical street-grid walking route.
+  const radians = Math.PI / 180;
+  const latDifference = (station.coordinate[1] - 42.3316) * radians;
+  const lonDifference = (station.coordinate[0] + 83.0466) * radians;
+  const a = Math.sin(latDifference / 2) ** 2 + Math.cos(42.3316 * radians) * Math.cos(station.coordinate[1] * radians) * Math.sin(lonDifference / 2) ** 2;
+  const walkingMiles = 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3;
+  const walkingMinutes = Math.max(1, Math.round(walkingMiles * 20));
   return <div className="detail-content">
     <DrawerHeader className="detail-heading"><div className="drawer-eyebrow"><span className="signal-dot" /> PEOPLE MOVER <span className="detail-divider">/</span> STATION {String(number).padStart(2, '0')}</div><DrawerTitle>{station.name}</DrawerTitle><DrawerDescription>{station.neighborhood}, Detroit</DrawerDescription></DrawerHeader>
-    <div className="detail-stats"><div><span>LINE</span><strong>01 <small>/ 13</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>ARRIVALS</span><strong className="arrival-unavailable">Not available</strong></div></div>
+    <div className="detail-stats"><div><span>WALK FROM CAMPUS MARTIUS*</span><strong>{walkingMinutes} <small>min · ~{walkingMiles.toFixed(1)} mi</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>ARRIVALS</span><strong className="arrival-unavailable">Not available</strong></div></div>
     <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Explore nearby places. Walking times and business hours vary; confirm before you go.</p><div className="restaurant-list">{station.restaurants.map(restaurant => <a key={restaurant.name} href={restaurant.url} target="_blank" rel="noopener noreferrer" className="restaurant-item"><span className="restaurant-icon"><MapPin size={17}/></span><span className="restaurant-main"><strong>{restaurant.name}</strong><small>{restaurant.category}</small></span><span className="restaurant-price">{restaurant.price}</span><ExternalLink size={15} className="restaurant-arrow" /></a>)}</div>
       <div className="station-actions"><Button variant="hudActive" asChild><a href={mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation2 size={16}/> WALKING DIRECTIONS <ExternalLink size={13}/></a></Button><div className="coordinates"><Compass size={14}/>{station.coordinate[1].toFixed(4)}° N, {Math.abs(station.coordinate[0]).toFixed(4)}° W</div></div>
     </div>
-    <div className="detail-disclaimer"><Clock3 size={13}/> Vehicle markers are simulated. Live service and arrival data are not connected.</div>
+    <div className="detail-disclaimer"><Clock3 size={13}/> *Walk is an estimate, not a routed trip. Vehicle markers are simulated; live arrivals are not connected.</div>
   </div>;
 }
