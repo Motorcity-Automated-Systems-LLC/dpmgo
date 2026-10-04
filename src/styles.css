@@ -66,3 +66,8 @@ h1 { margin: 22px 0 14px; font-size: clamp(42px, 4.4vw, 75px); line-height: 1.02
 .detail-stats > div:first-child strong { display: flex; flex-wrap: wrap; gap: 3px; align-items: baseline; }
 .detail-stats > div:first-child span { line-height: 1.4; }
 @media (max-width: 700px) { .detail-stats { grid-template-columns: 1.35fr 1.15fr 1fr; } .detail-stats > div:first-child span { font-size: 8px; } }
+.brand-logo { width: 44px; height: 44px; border-radius: 10px; object-fit: cover; box-shadow: 0 0 18px oklch(0.88 0.15 195 / 30%); }
+.restaurant-select { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; text-align: left; background: none; border: 0; color: inherit; cursor: pointer; padding: 0; }
+.info-list { padding: 0 24px 28px; display: grid; gap: 14px; }
+.info-button { justify-self: start; }
+@media (max-width: 700px) { .brand-logo { width: 36px; height: 36px; } }
