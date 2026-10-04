@@ -33,3 +33,59 @@ export const qlineStops: { name: string; coordinate: Coordinate }[] = [
   { name: 'Baltimore Street', coordinate: [-83.0725, 42.3695] },
   { name: 'Grand Boulevard', coordinate: [-83.0741, 42.3722] },
 ];
+
+export type Place = Restaurant & { id: string; coordinate: Coordinate };
+
+// Curated downtown restaurants; distances are computed from coordinates at runtime.
+export const restaurants: Place[] = [
+  ['lafayette', 'Lafayette Coney Island', 'Detroit coney dogs', '$', 'https://www.lafayetteconeyisland.com/', -83.0478, 42.3317],
+  ['american', 'American Coney Island', 'Detroit coney dogs', '$', 'https://www.americanconeyisland.com/', -83.0480, 42.3318],
+  ['parc', 'Parc', 'New American', '$$$', 'https://www.parcdetroit.com/', -83.0467, 42.3318],
+  ['central', 'Central Kitchen + Bar', 'American', '$$', 'https://centralkitchendetroit.com/', -83.0463, 42.3324],
+  ['chophouse', 'London Chop House', 'Steakhouse', '$$$$', 'https://thelondonchophouse.com/', -83.0466, 42.3308],
+  ['checker', 'Checker Bar', 'Burgers & bar', '$', 'https://www.checkerbardetroit.com/', -83.0457, 42.3313],
+  ['joemuer', 'Joe Muer Seafood', 'Seafood', '$$$$', 'https://joemuer.com/', -83.0396, 42.3290],
+  ['andiamo', 'Andiamo Detroit Riverfront', 'Italian', '$$$', 'https://andiamoitalia.com/', -83.0399, 42.3294],
+  ['apparatus', 'The Apparatus Room', 'New American', '$$$', 'https://detroitfoundationhotel.com/eat-drink/', -83.0505, 42.3300],
+  ['anchor', 'Anchor Bar', 'Pub & grill', '$$', 'https://www.anchorbardetroit.com/', -83.0520, 42.3313],
+  ['lumen', 'Lumen Detroit', 'American', '$$', 'https://www.lumendetroit.com/', -83.0530, 42.3297],
+  ['wright', 'Wright & Company', 'Small plates', '$$$', 'https://www.wrightdetroit.com/', -83.0478, 42.3346],
+  ['hudson', 'Hudson Café', 'Breakfast & brunch', '$$', 'https://hudsoncafedetroit.com/', -83.0479, 42.3336],
+  ['townhouse', 'Townhouse Detroit', 'American', '$$$', 'https://townhousedetroit.com/', -83.0470, 42.3335],
+  ['sanmorello', 'San Morello', 'Italian', '$$$', 'https://sanmorello.com/', -83.0487, 42.3356],
+  ['mootz', 'Mootz Pizzeria + Bar', 'Pizza', '$$', 'https://mootzpizzeria.com/', -83.0455, 42.3352],
+  ['cliffbells', 'Cliff Bell’s', 'Jazz club & dining', '$$$', 'https://www.cliffbells.com/', -83.0533, 42.3358],
+  ['bucharest', 'Bucharest Grill', 'Mediterranean', '$', 'https://bucharestgrill.com/', -83.0511, 42.3365],
+  ['pegasus', 'Pegasus Taverna', 'Greek', '$$', 'https://pegasustavernas.com/', -83.0426, 42.3354],
+  ['fishbones', 'Fishbone’s', 'Seafood & Creole', '$$', 'https://fishbonesusa.com/', -83.0421, 42.3350],
+  ['shillelagh', 'The Old Shillelagh', 'Irish pub', '$$', 'https://oldshillelagh.com/', -83.0419, 42.3349],
+  ['firebird', 'Firebird Tavern', 'Tavern', '$$', 'https://www.firebirdtavern.com/', -83.0428, 42.3357],
+  ['sweetwater', 'Sweetwater Tavern', 'Wings & tavern', '$$', 'https://sweetwatertavern.net/', -83.0413, 42.3335],
+].map(([id, name, category, price, url, lng, lat]) => ({ id, name, category, price, url, coordinate: [lng, lat] } as Place));
+
+export function milesBetween(a: Coordinate, b: Coordinate) {
+  const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dLon / 2) ** 2;
+  return 3958.8 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+}
+
+// Walking distance approximated as straight-line × 1.25 for Detroit's street grid.
+export function nearbyRestaurants(station: Station) {
+  return restaurants.map(p => ({ ...p, walkMiles: milesBetween(station.coordinate, p.coordinate) * 1.25 }))
+    .filter(p => p.walkMiles <= 0.5).sort((a, b) => a.walkMiles - b.walkMiles).slice(0, 5);
+}
+
+export const sportsTeams = [
+  { id: 'lions', team: 'Detroit Lions', league: 'NFL', venue: 'Ford Field', station: 'Greektown Station', href: 'https://www.detroitlions.com/schedule/' },
+  { id: 'tigers', team: 'Detroit Tigers', league: 'MLB', venue: 'Comerica Park', station: 'Broadway Station', href: 'https://www.mlb.com/tigers/schedule' },
+  { id: 'redwings', team: 'Detroit Red Wings', league: 'NHL', venue: 'Little Caesars Arena', station: 'Grand Circus Park Station', href: 'https://www.nhl.com/redwings/schedule' },
+  { id: 'pistons', team: 'Detroit Pistons', league: 'NBA', venue: 'Little Caesars Arena', station: 'Grand Circus Park Station', href: 'https://www.nba.com/pistons/schedule' },
+];
+
+export const activities = [
+  { name: 'Campus Martius Park events', area: 'Downtown', note: 'Seasonal public programming, ice rink in winter', station: 'Financial District Station', href: 'https://downtowndetroit.org/events/', downtown: true },
+  { name: 'Beacon Park programming', area: 'Downtown', note: 'Free concerts, markets and family events', station: 'Fort / Cass Station', href: 'https://downtowndetroit.org/events/', downtown: true },
+  { name: 'Detroit RiverWalk', area: 'Downtown riverfront', note: 'Public riverfront paths and events', station: 'Renaissance Center Station', href: 'https://detroitriverfront.org/events', downtown: true },
+  { name: 'Capitol Park', area: 'Downtown', note: 'Public plaza with pop-up events', station: 'Times Square Station', href: 'https://downtowndetroit.org/', downtown: true },
+  { name: 'Eastern Market Saturday Market', area: 'Eastern Market', note: 'Outside downtown', station: '', href: 'https://easternmarket.org/', downtown: false },
+].filter(a => a.downtown);
