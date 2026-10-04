@@ -4,9 +4,10 @@ import { ArrowDownRight, ArrowRight, ChevronDown, Clock3, Compass, ExternalLink,
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { peopleMoverStations, type Station } from '@/data/transit';
+import { peopleMoverStations, nearbyRestaurants, sportsTeams, activities, type Station } from '@/data/transit';
+import logo from '@/assets/dpm-go-logo.jpg.asset.json';
 
-type MapProps = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void };
+type MapProps = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
 const eventLinks = [
   { label: 'Downtown Detroit events', source: 'Downtown Detroit Partnership', href: 'https://downtowndetroit.org/events/' },
   { label: 'What’s happening in Detroit', source: 'Visit Detroit', href: 'https://visitdetroit.com/events/' },
@@ -36,23 +37,25 @@ function Index() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [stationListOpen, setStationListOpen] = useState(false);
+  const [restaurantId, setRestaurantId] = useState<string | null>(null);
+  const [panel, setPanel] = useState<null | 'activities' | string>(null);
   const selected = peopleMoverStations.find(station => station.id === selectedId) ?? null;
   const filtered = peopleMoverStations.filter(station => station.name.toLowerCase().includes(search.toLowerCase()));
 
   useEffect(() => { import('@/components/TransitMap').then(module => setMapComponent(() => module.default)); }, []);
-  const openStation = (id: string) => { setSelectedId(id); setStationListOpen(false); };
+  const openStation = (id: string) => { setSelectedId(id); setRestaurantId(null); setStationListOpen(false); };
 
   return (
     <main className="app-shell">
       <div className="map-plane" aria-hidden={!MapComponent}>
         <div className="map-placeholder" aria-hidden="true"><div className="map-placeholder-grid" /></div>
-        {MapComponent && <MapComponent peopleMover={peopleMover} qline={qline} selectedId={selectedId} onSelect={openStation} onReady={setMapReady} />}
+        {MapComponent && <MapComponent peopleMover={peopleMover} qline={qline} selectedId={selectedId} onSelect={openStation} onReady={setMapReady} restaurantId={restaurantId} />}
         <div className="map-vignette" />
       </div>
       <div className="interface-shell">
         <header className="topbar">
           <div className="brand-block">
-            <div className="brand-symbol" aria-hidden="true"><span /><span /><span /></div>
+            <img src={logo.url} alt="DPM - Go! logo" className="brand-logo" />
             <div><div className="brand-name">DPM <span>–</span> Go<span className="brand-bang">!</span></div><div className="brand-caption">MOTORCITY AUTOMATED SYSTEMS</div></div>
           </div>
           <div className="topbar-right">
@@ -60,9 +63,10 @@ function Index() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild><Button variant="hudOutline" size="hud" aria-label="Open Detroit events and sports links"><span className="desktop-label">EXPLORE DETROIT</span><span className="mobile-label">EVENTS</span><ChevronDown size={14}/></Button></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="event-menu">
-                <DropdownMenuLabel className="event-menu-heading">AROUND DOWNTOWN <span>↗</span></DropdownMenuLabel>
+                <DropdownMenuLabel className="event-menu-heading">DETROIT SPORTS</DropdownMenuLabel>
+                {sportsTeams.map((t, i) => <DropdownMenuItem key={t.id} onSelect={() => setPanel(t.id)} className="event-link"><span className="event-index">{String(i + 1).padStart(2, '0')}</span><span><strong>{t.team}</strong><small>{t.league} · {t.venue}</small></span><ArrowRight size={13} /></DropdownMenuItem>)}
                 <DropdownMenuSeparator />
-                {eventLinks.map((item, index) => <DropdownMenuItem key={item.label} asChild><a href={item.href} target="_blank" rel="noopener noreferrer" className="event-link"><span className="event-index">{String(index + 1).padStart(2, '0')}</span><span><strong>{item.label}</strong><small>{item.source}</small></span><ExternalLink size={13} /></a></DropdownMenuItem>)}
+                <DropdownMenuItem onSelect={() => setPanel('activities')} className="event-link"><span className="event-index">05</span><span><strong>Activities</strong><small>Public events in Downtown Detroit</small></span><ArrowRight size={13} /></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -102,13 +106,27 @@ function Index() {
       </Drawer>
 
       <Drawer open={!!selected} onOpenChange={open => { if (!open) setSelectedId(null); }} shouldScaleBackground={false}>
-        <DrawerContent className="detail-drawer">{selected && <StationDetails station={selected} />}</DrawerContent>
+        <DrawerContent className="detail-drawer">{selected && <StationDetails station={selected} restaurantId={restaurantId} onRestaurant={setRestaurantId} />}</DrawerContent>
+      </Drawer>
+      <Drawer open={!!panel} onOpenChange={open => { if (!open) setPanel(null); }} shouldScaleBackground={false}>
+        <DrawerContent className="station-drawer">{panel && <InfoPanel panel={panel} />}</DrawerContent>
       </Drawer>
     </main>
   );
 }
 
-function StationDetails({ station }: { station: Station }) {
+function InfoPanel({ panel }: { panel: string }) {
+  if (panel === 'activities') return <><DrawerHeader><div className="drawer-eyebrow">DOWNTOWN DETROIT / PUBLIC ACTIVITIES</div><DrawerTitle>Activities</DrawerTitle><DrawerDescription>Downtown-only public spots · live event feed coming soon</DrawerDescription></DrawerHeader>
+    <div className="restaurant-list info-list">{activities.map(a => <a key={a.name} href={a.href} target="_blank" rel="noopener noreferrer" className="restaurant-item"><span className="restaurant-icon"><MapPin size={17}/></span><span className="restaurant-main"><strong>{a.name}</strong><small>{a.note} · near {a.station}</small></span><ExternalLink size={15} className="restaurant-arrow" /></a>)}</div></>;
+  const t = sportsTeams.find(x => x.id === panel);
+  if (!t) return null;
+  return <><DrawerHeader><div className="drawer-eyebrow">{t.league} / DETROIT SPORTS</div><DrawerTitle>{t.team}</DrawerTitle><DrawerDescription>{t.venue} · ride to {t.station}</DrawerDescription></DrawerHeader>
+    <div className="info-list"><div className="detail-stats"><div><span>NEXT / RECENT GAME</span><strong className="arrival-unavailable">Live data coming soon</strong></div><div><span>VENUE</span><strong className="next-stop">{t.venue}</strong></div><div><span>NEAREST STOP</span><strong className="next-stop">{t.station}</strong></div></div>
+    <Button variant="hudActive" asChild className="info-button"><a href={t.href} target="_blank" rel="noopener noreferrer">OFFICIAL SCHEDULE <ExternalLink size={13}/></a></Button></div></>;
+}
+
+function StationDetails({ station, restaurantId, onRestaurant }: { station: Station; restaurantId: string | null; onRestaurant: (id: string) => void }) {
+  const nearby = nearbyRestaurants(station);
   const number = peopleMoverStations.indexOf(station) + 1;
   const next = peopleMoverStations[number % peopleMoverStations.length] ?? station;
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.coordinate[1]},${station.coordinate[0]}`;
@@ -122,7 +140,7 @@ function StationDetails({ station }: { station: Station }) {
   return <div className="detail-content">
     <DrawerHeader className="detail-heading"><div className="drawer-eyebrow"><span className="signal-dot" /> PEOPLE MOVER <span className="detail-divider">/</span> STATION {String(number).padStart(2, '0')}</div><DrawerTitle>{station.name}</DrawerTitle><DrawerDescription>{station.neighborhood}, Detroit</DrawerDescription></DrawerHeader>
     <div className="detail-stats"><div><span>WALK FROM CAMPUS MARTIUS*</span><strong>{walkingMinutes} <small>min · ~{walkingMiles.toFixed(1)} mi</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>ARRIVALS</span><strong className="arrival-unavailable">Not available</strong></div></div>
-    <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Explore nearby places. Walking times and business hours vary; confirm before you go.</p><div className="restaurant-list">{station.restaurants.map(restaurant => <a key={restaurant.name} href={restaurant.url} target="_blank" rel="noopener noreferrer" className="restaurant-item"><span className="restaurant-icon"><MapPin size={17}/></span><span className="restaurant-main"><strong>{restaurant.name}</strong><small>{restaurant.category}</small></span><span className="restaurant-price">{restaurant.price}</span><ExternalLink size={15} className="restaurant-arrow" /></a>)}</div>
+    <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Tap a spot to pin it on the map. Distances are walking estimates from this station; times and business hours vary; confirm before you go.</p><div className="restaurant-list">{nearby.map(r => <div key={r.id} className={`restaurant-item ${restaurantId === r.id ? 'station-selected' : ''}`}><button type="button" className="restaurant-select" onClick={() => onRestaurant(r.id)} aria-label={`Show ${r.name} on map`}><span className="restaurant-icon"><MapPin size={17}/></span><span className="restaurant-main"><strong>{r.name}</strong><small>{r.category} · {r.walkMiles.toFixed(2)} mi · ~{Math.max(1, Math.round(r.walkMiles * 20))} min walk</small></span><span className="restaurant-price">{r.price}</span></button><a href={r.url} target="_blank" rel="noopener noreferrer" aria-label={`${r.name} website`} className="restaurant-arrow"><ExternalLink size={15} /></a></div>)}</div>
       <div className="station-actions"><Button variant="hudActive" asChild><a href={mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation2 size={16}/> WALKING DIRECTIONS <ExternalLink size={13}/></a></Button><div className="coordinates"><Compass size={14}/>{station.coordinate[1].toFixed(4)}° N, {Math.abs(station.coordinate[0]).toFixed(4)}° W</div></div>
     </div>
     <div className="detail-disclaimer"><Clock3 size={13}/> *Walk is an estimate, not a routed trip. Vehicle markers are simulated; live arrivals are not connected.</div>

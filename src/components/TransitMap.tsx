@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type * as GeoJSON from 'geojson';
-import { peopleMoverStations, qlineStops, type Coordinate } from '@/data/transit';
+import { peopleMoverStations, qlineStops, restaurants, type Coordinate } from '@/data/transit';
 
-type Props = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void };
+type Props = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
 type Point = GeoJSON.Feature<GeoJSON.Point>;
 const point = (coordinate: Coordinate): Point => ({ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: coordinate } });
 const route = (coordinates: Coordinate[]): GeoJSON.Feature<GeoJSON.LineString> => ({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates } });
@@ -27,7 +27,7 @@ function simulatedPosition(path: Coordinate[], elapsed: number, loop: boolean): 
   return [a[0] + (b[0] - a[0]) * progress, a[1] + (b[1] - a[1]) * progress];
 }
 
-export default function TransitMap({ peopleMover, qline, selectedId, onSelect, onReady }: Props) {
+export default function TransitMap({ peopleMover, qline, selectedId, onSelect, onReady, restaurantId }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const onSelectRef = useRef(onSelect);
@@ -66,6 +66,10 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
         map.addLayer({ id: `${id}-glow`, type: 'circle', source: id, paint: { 'circle-radius': 19, 'circle-color': color, 'circle-opacity': 0.24, 'circle-blur': 0.65 } });
         map.addLayer({ id, type: 'circle', source: id, paint: { 'circle-radius': 7, 'circle-color': color, 'circle-stroke-color': '#07131b', 'circle-stroke-width': 2 } });
       }
+      map.addSource('restaurant-pin', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({ id: 'restaurant-pin-glow', type: 'circle', source: 'restaurant-pin', paint: { 'circle-radius': 22, 'circle-color': '#ff4fd8', 'circle-opacity': 0.25, 'circle-blur': 0.6 } });
+      map.addLayer({ id: 'restaurant-pin', type: 'circle', source: 'restaurant-pin', paint: { 'circle-radius': 9, 'circle-color': '#ff4fd8', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } });
+      map.addLayer({ id: 'restaurant-label', type: 'symbol', source: 'restaurant-pin', layout: { 'text-field': ['get', 'name'], 'text-size': 13, 'text-offset': [0, -1.6], 'text-anchor': 'bottom' }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07131b', 'text-halo-width': 2 } });
       map.on('click', 'station-pins', e => {
         const id = e.features?.[0]?.properties?.['id'];
         if (typeof id === 'string') onSelectRef.current(id);
@@ -106,6 +110,14 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
     const station = peopleMoverStations.find(s => s.id === selectedId);
     if (map && station) map.flyTo({ center: station.coordinate, zoom: Math.max(map.getZoom(), 15.5), duration: 900, essential: true });
   }, [selectedId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const source = map?.getSource('restaurant-pin') as mapboxgl.GeoJSONSource | undefined;
+    const place = restaurants.find(r => r.id === restaurantId);
+    source?.setData({ type: 'FeatureCollection', features: place ? [{ ...point(place.coordinate), properties: { name: place.name } }] : [] });
+    if (map && place) map.flyTo({ center: place.coordinate, zoom: 17, duration: 1000, essential: true, padding: { top: 0, bottom: window.innerHeight * 0.45, left: 0, right: 0 } });
+  }, [restaurantId]);
 
   return <div ref={container} className="h-full w-full" aria-label="Satellite map of downtown Detroit transit stops" />;
 }
