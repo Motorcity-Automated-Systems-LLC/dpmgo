@@ -4,8 +4,12 @@ import { ArrowDownRight, ArrowRight, ChevronDown, Clock3, Compass, ExternalLink,
 import { Button } from '@/components/ui/button';
 import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { peopleMoverStations, nearbyRestaurants, sportsTeams, activities, type Station } from '@/data/transit';
 import logo from '@/assets/dpm-go-logo.jpg.asset.json';
+
+const diningImages = import.meta.glob<{ url: string }>('/src/assets/dining/*.asset.json', { eager: true, import: 'default' });
+const diningImage = (id: string) => diningImages[`/src/assets/dining/${id}.jpg.asset.json`]?.url;
 
 type MapProps = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
 const eventLinks = [
@@ -39,11 +43,24 @@ function Index() {
   const [stationListOpen, setStationListOpen] = useState(false);
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [panel, setPanel] = useState<null | 'activities' | string>(null);
+  const [legal, setLegal] = useState<'terms' | 'privacy' | null>(null);
+  const [waking, setWaking] = useState(true);
   const selected = peopleMoverStations.find(station => station.id === selectedId) ?? null;
   const filtered = peopleMoverStations.filter(station => station.name.toLowerCase().includes(search.toLowerCase()));
 
   useEffect(() => { import('@/components/TransitMap').then(module => setMapComponent(() => module.default)); }, []);
-  const openStation = (id: string) => { setSelectedId(id); setRestaurantId(null); setStationListOpen(false); };
+  useEffect(() => {
+    const delay = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1450;
+    const timer = window.setTimeout(() => setWaking(false), delay);
+    return () => window.clearTimeout(timer);
+  }, []);
+  const openStation = (id: string) => {
+    setRestaurantId(null);
+    if (stationListOpen) {
+      setStationListOpen(false);
+      window.setTimeout(() => setSelectedId(id), 320);
+    } else setSelectedId(id);
+  };
 
   return (
     <main className="app-shell">
@@ -98,7 +115,7 @@ function Index() {
         <div className="map-legend"><span><i className="legend-line cyan-line" /> PEOPLE MOVER</span><span><i className="legend-line warm-line" /> QLINE</span><span><i className="legend-vehicle" /> SIMULATED VEHICLE</span></div>
         <div className="status-strip"><div><Radio size={14} /><strong>NETWORK VISUALIZATION</strong><span className="status-divider">/</span><span>{mapReady ? 'MAP ONLINE' : 'LOADING MAP'}</span></div><span>VEHICLE POSITIONS ARE SIMULATED · NOT LIVE ARRIVALS</span></div>
         <Button variant="mobileStations" className="mobile-station-trigger" onClick={() => setStationListOpen(true)}><Layers3 size={18}/> VIEW ALL 13 STATIONS <ArrowDownRight size={17}/></Button>
-        <footer className="compliance-footer">MOTORCITY AUTOMATED SYSTEMS <span>·</span> DPM - Go! <span className="footer-end">Building Targeted Autonomous Solutions for Detroit</span></footer>
+         <footer className="compliance-footer"><span className="footer-brand">MOTORCITY AUTOMATED SYSTEMS <span>·</span> DPM - Go! <span className="footer-end">Building Targeted Autonomous Solutions for Detroit</span></span><nav aria-label="Official and legal links"><a href="https://www.thepeoplemover.com/" target="_blank" rel="noopener noreferrer">Official People Mover <ExternalLink size={11}/></a><Button variant="link" onClick={() => setLegal('terms')}>Terms &amp; Conditions</Button><Button variant="link" onClick={() => setLegal('privacy')}>Privacy Policy</Button></nav></footer>
       </div>
 
       <Drawer open={stationListOpen} onOpenChange={setStationListOpen} shouldScaleBackground={false}>
@@ -111,6 +128,21 @@ function Index() {
       <Drawer open={!!panel} onOpenChange={open => { if (!open) setPanel(null); }} shouldScaleBackground={false}>
         <DrawerContent className="station-drawer">{panel && <InfoPanel panel={panel} />}</DrawerContent>
       </Drawer>
+      <Dialog open={!!legal} onOpenChange={open => { if (!open) setLegal(null); }}>
+        <DialogContent className="legal-dialog"><DialogHeader><DialogTitle>{legal === 'terms' ? 'Terms & Conditions' : 'Privacy Policy'}</DialogTitle><DialogDescription>DPM - Go! · Motorcity Automated Systems, LLC</DialogDescription></DialogHeader>
+          {legal === 'terms' ? <div className="legal-copy">
+            <p>DPM - Go! is provided by Motorcity Automated Systems, LLC for general trip planning and informational use. Software developed by Detroit Core Automation, LLC, a subsidiary of Motorcity Automated Systems, LLC.</p>
+            <h3>Transit information</h3><p>Map locations, walking distances, vehicle animations, business listings and any future schedules or arrivals may be approximate, delayed, incomplete or unavailable. Vehicle positions shown here are simulations, not live tracking. Neither company operates the Detroit People Mover or QLINE, and neither guarantees transit service, arrival times, accessibility, opening hours, or third-party data accuracy. Always confirm service and travel conditions with the transit operator before traveling. Neither company is responsible for missed connections, transit delays, interruptions or decisions made in reliance on this app.</p>
+            <h3>Third-party services</h3><p>Links to restaurants, transit agencies, map providers and event listings lead to independent services. Their content, pricing, availability and privacy practices are outside our control. Use of this app is at your own risk. To the extent permitted by law, Motorcity Automated Systems, LLC and Detroit Core Automation, LLC disclaim warranties and liability for losses arising from the app or third-party content. Nothing here limits rights that cannot legally be excluded.</p>
+          </div> : <div className="legal-copy">
+            <p>Software developed by Detroit Core Automation, LLC, a subsidiary of Motorcity Automated Systems, LLC.</p>
+            <h3>Information and services</h3><p>DPM - Go! does not require an account or ask for your name, email or precise device location. Station search, map selections and dining selections are handled in your browser and are not saved to an account. Our hosting infrastructure may process standard technical information such as IP address and request logs to deliver and secure the site.</p>
+            <h3>External providers</h3><p>Mapbox supplies map imagery and may receive your IP address and map requests when the map loads. Restaurant and transit links open independent websites governed by their own privacy policies. We do not control their data practices. We do not sell personal information through this app.</p>
+            <h3>Questions</h3><p>For privacy questions, contact Motorcity Automated Systems, LLC through its official business channels. This policy applies to the DPM - Go! app and may change as live integrations are added.</p>
+          </div>}
+        </DialogContent>
+      </Dialog>
+      {waking && <div className="wake-screen" aria-label="Loading DPM - Go!" role="status"><img src={logo.url} alt="DPM - Go!" className="wake-logo"/><span className="wake-progress" /></div>}
     </main>
   );
 }
@@ -129,18 +161,18 @@ function StationDetails({ station, restaurantId, onRestaurant }: { station: Stat
   const nearby = nearbyRestaurants(station);
   const number = peopleMoverStations.indexOf(station) + 1;
   const next = peopleMoverStations[number % peopleMoverStations.length] ?? station;
-  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.coordinate[1]},${station.coordinate[0]}`;
+  const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${station.entrance[1]},${station.entrance[0]}`;
   // Straight-line distance from Campus Martius, adjusted for a typical street-grid walking route.
   const radians = Math.PI / 180;
-  const latDifference = (station.coordinate[1] - 42.3316) * radians;
-  const lonDifference = (station.coordinate[0] + 83.0466) * radians;
-  const a = Math.sin(latDifference / 2) ** 2 + Math.cos(42.3316 * radians) * Math.cos(station.coordinate[1] * radians) * Math.sin(lonDifference / 2) ** 2;
+  const latDifference = (station.entrance[1] - 42.3316) * radians;
+  const lonDifference = (station.entrance[0] + 83.0466) * radians;
+  const a = Math.sin(latDifference / 2) ** 2 + Math.cos(42.3316 * radians) * Math.cos(station.entrance[1] * radians) * Math.sin(lonDifference / 2) ** 2;
   const walkingMiles = 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3;
   const walkingMinutes = Math.max(1, Math.round(walkingMiles * 20));
   return <div className="detail-content">
     <DrawerHeader className="detail-heading"><div className="drawer-eyebrow"><span className="signal-dot" /> PEOPLE MOVER <span className="detail-divider">/</span> STATION {String(number).padStart(2, '0')}</div><DrawerTitle>{station.name}</DrawerTitle><DrawerDescription>{station.neighborhood}, Detroit</DrawerDescription></DrawerHeader>
     <div className="detail-stats"><div><span>WALK FROM CAMPUS MARTIUS*</span><strong>{walkingMinutes} <small>min · ~{walkingMiles.toFixed(1)} mi</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>ARRIVALS</span><strong className="arrival-unavailable">Not available</strong></div></div>
-    <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Tap a spot to pin it on the map. Distances are walking estimates from this station; times and business hours vary; confirm before you go.</p><div className="restaurant-list">{nearby.map(r => <div key={r.id} className={`restaurant-item ${restaurantId === r.id ? 'station-selected' : ''}`}><button type="button" className="restaurant-select" onClick={() => onRestaurant(r.id)} aria-label={`Show ${r.name} on map`}><span className="restaurant-icon"><MapPin size={17}/></span><span className="restaurant-main"><strong>{r.name}</strong><small>{r.category} · {r.walkMiles.toFixed(2)} mi · ~{Math.max(1, Math.round(r.walkMiles * 20))} min walk</small></span><span className="restaurant-price">{r.price}</span></button><a href={r.url} target="_blank" rel="noopener noreferrer" aria-label={`${r.name} website`} className="restaurant-arrow"><ExternalLink size={15} /></a></div>)}</div>
+    <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Tap a spot to pin it on the map. Distances are walking estimates from this station entrance, not routed directions; times and business hours vary.</p><div className="restaurant-list">{nearby.map(r => <div key={r.id} className={`restaurant-item ${restaurantId === r.id ? 'station-selected' : ''}`}><Button type="button" variant="ghost" className="restaurant-select" onClick={() => onRestaurant(r.id)} aria-label={`Show ${r.name} on map`}><span className="restaurant-thumb">{diningImage(r.id) ? <img src={diningImage(r.id)} alt={`Map thumbnail of ${r.name}`} loading="lazy" /> : <MapPin size={17}/>}</span><span className="restaurant-main"><strong>{r.name}</strong><small>{r.category} · {r.walkMiles.toFixed(2)} mi · ~{Math.max(1, Math.round(r.walkMiles * 20))} min walk</small></span><span className="restaurant-price">{r.price}</span></Button><a href={r.url} target="_blank" rel="noopener noreferrer" aria-label={`${r.name} website`} className="restaurant-arrow"><ExternalLink size={15} /></a></div>)}</div><p className="thumbnail-credit">Thumbnail maps © Mapbox © OpenStreetMap</p>
       <div className="station-actions"><Button variant="hudActive" asChild><a href={mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation2 size={16}/> WALKING DIRECTIONS <ExternalLink size={13}/></a></Button><div className="coordinates"><Compass size={14}/>{station.coordinate[1].toFixed(4)}° N, {Math.abs(station.coordinate[0]).toFixed(4)}° W</div></div>
     </div>
     <div className="detail-disclaimer"><Clock3 size={13}/> *Walk is an estimate, not a routed trip. Vehicle markers are simulated; live arrivals are not connected.</div>

@@ -3,6 +3,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type * as GeoJSON from 'geojson';
 import { peopleMoverStations, qlineStops, restaurants, type Coordinate } from '@/data/transit';
+import { peopleMoverShape } from '@/data/peopleMoverShape';
 
 type Props = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
 type Point = GeoJSON.Feature<GeoJSON.Point>;
@@ -52,7 +53,7 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
       try {
         map.addLayer({ id: 'dpm-3d-buildings', source: 'composite', 'source-layer': 'building', filter: ['==', 'extrude', 'true'], type: 'fill-extrusion', minzoom: 14, paint: { 'fill-extrusion-color': '#7e9aa7', 'fill-extrusion-height': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'height']], 'fill-extrusion-base': ['interpolate', ['linear'], ['zoom'], 14, 0, 14.5, ['get', 'min_height']], 'fill-extrusion-opacity': 0.66 } });
       } catch { /* Some satellite styles do not expose the building source. */ }
-      addLine('mover-line', [...moverPath, moverPath[0] ?? [-83.0536, 42.3323]], '#00f0ff', 4);
+       addLine('mover-line', peopleMoverShape, '#00f0ff', 4);
       addLine('qline-line', qPath, '#ffbb70', 3);
       map.addSource('stations', { type: 'geojson', data: { type: 'FeatureCollection', features: peopleMoverStations.map((s, i) => ({ ...point(s.coordinate), properties: { id: s.id, name: s.name, number: i + 1 } })) } });
       map.addLayer({ id: 'station-halo', type: 'circle', source: 'stations', paint: { 'circle-radius': 15, 'circle-color': '#00f0ff', 'circle-opacity': 0.15, 'circle-blur': 0.55 } });
@@ -70,12 +71,18 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
       map.addLayer({ id: 'restaurant-pin-glow', type: 'circle', source: 'restaurant-pin', paint: { 'circle-radius': 22, 'circle-color': '#ff4fd8', 'circle-opacity': 0.25, 'circle-blur': 0.6 } });
       map.addLayer({ id: 'restaurant-pin', type: 'circle', source: 'restaurant-pin', paint: { 'circle-radius': 9, 'circle-color': '#ff4fd8', 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 } });
       map.addLayer({ id: 'restaurant-label', type: 'symbol', source: 'restaurant-pin', layout: { 'text-field': ['get', 'name'], 'text-size': 13, 'text-offset': [0, -1.6], 'text-anchor': 'bottom' }, paint: { 'text-color': '#ffffff', 'text-halo-color': '#07131b', 'text-halo-width': 2 } });
-      map.on('click', 'station-pins', e => {
+       map.on('click', 'station-pins', e => {
         const id = e.features?.[0]?.properties?.['id'];
         if (typeof id === 'string') onSelectRef.current(id);
       });
-      map.on('mouseenter', 'station-pins', () => { map.getCanvas().style.cursor = 'pointer'; });
-      map.on('mouseleave', 'station-pins', () => { map.getCanvas().style.cursor = ''; });
+       map.on('click', 'station-labels', e => {
+         const id = e.features?.[0]?.properties?.['id'];
+         if (typeof id === 'string') onSelectRef.current(id);
+       });
+       for (const layer of ['station-pins', 'station-labels']) {
+         map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
+         map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+       }
       onReady?.(true);
       let lastUpdate = 0;
       const animate = (time: number) => {
@@ -108,7 +115,7 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
   useEffect(() => {
     const map = mapRef.current;
     const station = peopleMoverStations.find(s => s.id === selectedId);
-    if (map && station) map.flyTo({ center: station.coordinate, zoom: Math.max(map.getZoom(), 15.5), duration: 900, essential: true });
+     if (map && station) map.flyTo({ center: station.coordinate, zoom: Math.max(map.getZoom(), 15.5), duration: 900, essential: true, padding: { top: 0, bottom: Math.min(window.innerHeight * 0.42, 330), left: 0, right: 0 } });
   }, [selectedId]);
 
   useEffect(() => {
