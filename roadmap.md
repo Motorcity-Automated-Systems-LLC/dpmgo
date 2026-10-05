@@ -6,3 +6,6 @@
 - [x] Add official logo, 3-5 nearby restaurants per station with map pins and walking distance.
 - [x] Add sports team panels and downtown-only activities list.
 - [ ] Connect live sports scores and live events feed (waiting on integrations).
+- [ ] Correct all 13 station locations from the agency's public GTFS feed.
+- [ ] Add the official People Mover link and restaurant location thumbnails.
+- [ ] Add legal terms/privacy and an opening logo animation.
