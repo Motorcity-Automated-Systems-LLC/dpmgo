@@ -1,22 +1,24 @@
 export type Coordinate = [number, number];
 export type Restaurant = { name: string; category: string; price: string; url: string };
-export type Station = { id: string; name: string; coordinate: Coordinate; neighborhood: string; restaurants: Restaurant[] };
+export type Station = { id: string; name: string; coordinate: Coordinate; entrance: Coordinate; neighborhood: string; restaurants: Restaurant[] };
 
-// Approximate station entrance positions, ordered as the requested loop sequence.
+// Platform positions and nearest public entrances from Detroit Transportation Corporation GTFS stops.txt:
+// https://hosted-gtfs-feeds.s3.amazonaws.com/DPM/gtfs.zip (location_type 1 and 2).
+// Preserve this order for the rider-facing directory; it begins at Michigan rather than Times Square.
 export const peopleMoverStations: Station[] = [
-  { id: 'michigan', name: 'Michigan Station', coordinate: [-83.0536, 42.3323], neighborhood: 'West Downtown', restaurants: [{ name: 'Lafayette Coney Island', category: 'Detroit coney dogs', price: '$', url: 'https://www.lafayetteconeyisland.com/' }, { name: 'The Statler', category: 'French-American', price: '$$$', url: 'https://www.statlerdetroit.com/' }] },
-  { id: 'fort-cass', name: 'Fort / Cass Station', coordinate: [-83.0528, 42.3302], neighborhood: 'West Downtown', restaurants: [{ name: 'Anchor Bar', category: 'Pub & grill', price: '$$', url: 'https://www.anchorbardetroit.com/' }, { name: 'The Apparatus Room', category: 'New American', price: '$$$', url: 'https://detroitfoundationhotel.com/apparatus-room/' }] },
-  { id: 'huntington', name: 'Huntington Place Station', coordinate: [-83.0478, 42.3278], neighborhood: 'Convention District', restaurants: [{ name: 'The Apparatus Room', category: 'New American', price: '$$$', url: 'https://detroitfoundationhotel.com/apparatus-room/' }, { name: 'London Chop House', category: 'Steakhouse', price: '$$$$', url: 'https://thelondonchophouse.com/' }] },
-  { id: 'water-square', name: 'Water Square Station', coordinate: [-83.0505, 42.3259], neighborhood: 'Riverfront', restaurants: [{ name: 'The Apparatus Room', category: 'New American', price: '$$$', url: 'https://detroitfoundationhotel.com/apparatus-room/' }, { name: 'Lumen Detroit', category: 'American', price: '$$', url: 'https://www.lumendetroit.com/' }] },
-  { id: 'financial', name: 'Financial District Station', coordinate: [-83.0473, 42.3300], neighborhood: 'Financial District', restaurants: [{ name: 'London Chop House', category: 'Steakhouse', price: '$$$$', url: 'https://thelondonchophouse.com/' }, { name: 'Parc', category: 'New American', price: '$$$', url: 'https://www.parcdetroit.com/' }] },
-  { id: 'millender', name: 'Millender Center Station', coordinate: [-83.0425, 42.3308], neighborhood: 'Civic Center', restaurants: [{ name: 'Andiamo Detroit Riverfront', category: 'Italian', price: '$$$', url: 'https://andiamoitalia.com/detroit-riverfront/' }, { name: 'Sweetwater Tavern', category: 'Wings & tavern', price: '$$', url: 'https://sweetwatertavern.net/' }] },
-  { id: 'renaissance', name: 'Renaissance Center Station', coordinate: [-83.0401, 42.3292], neighborhood: 'Riverfront', restaurants: [{ name: 'Joe Muer Seafood', category: 'Seafood', price: '$$$$', url: 'https://joemuer.com/' }, { name: 'Andiamo Detroit Riverfront', category: 'Italian', price: '$$$', url: 'https://andiamoitalia.com/detroit-riverfront/' }] },
-  { id: 'bricktown', name: 'Bricktown Station', coordinate: [-83.0423, 42.3314], neighborhood: 'Bricktown', restaurants: [{ name: 'The Old Shillelagh', category: 'Irish pub', price: '$$', url: 'https://oldshillelagh.com/' }, { name: 'Sweetwater Tavern', category: 'Wings & tavern', price: '$$', url: 'https://sweetwatertavern.net/' }] },
-  { id: 'greektown', name: 'Greektown Station', coordinate: [-83.0435, 42.3338], neighborhood: 'Greektown', restaurants: [{ name: 'Fishbone’s', category: 'Seafood & Creole', price: '$$', url: 'https://fishbonesusa.com/' }, { name: 'Pegasus Taverna', category: 'Greek', price: '$$', url: 'https://pegasustavernas.com/' }] },
-  { id: 'cadillac', name: 'Cadillac Center Station', coordinate: [-83.0454, 42.3347], neighborhood: 'Cadillac Square', restaurants: [{ name: 'Cadillac Square Diner', category: 'Diner', price: '$', url: 'https://cadillacsquarediner.com/' }, { name: 'Parc', category: 'New American', price: '$$$', url: 'https://www.parcdetroit.com/' }] },
-  { id: 'broadway', name: 'Broadway Station', coordinate: [-83.0475, 42.3361], neighborhood: 'Broadway', restaurants: [{ name: 'Mootz Pizzeria + Bar', category: 'Pizza', price: '$$', url: 'https://mootzpizzeria.com/' }, { name: 'Wright & Company', category: 'Small plates', price: '$$$', url: 'https://www.wrightdetroit.com/' }] },
-  { id: 'grand-circus', name: 'Grand Circus Park Station', coordinate: [-83.0505, 42.3361], neighborhood: 'Grand Circus Park', restaurants: [{ name: 'The Statler', category: 'French-American', price: '$$$', url: 'https://www.statlerdetroit.com/' }, { name: 'Cliff Bell’s', category: 'Jazz club & dining', price: '$$$', url: 'https://www.cliffbells.com/' }] },
-  { id: 'times-square', name: 'Times Square Station', coordinate: [-83.0531, 42.3338], neighborhood: 'West Downtown', restaurants: [{ name: 'The Statler', category: 'French-American', price: '$$$', url: 'https://www.statlerdetroit.com/' }, { name: 'Lafayette Coney Island', category: 'Detroit coney dogs', price: '$', url: 'https://www.lafayetteconeyisland.com/' }] },
+  { id: 'michigan', name: 'Michigan Station', coordinate: [-83.052120, 42.331363], entrance: [-83.052151, 42.331464], neighborhood: 'West Downtown', restaurants: [] },
+  { id: 'fort-cass', name: 'Fort / Cass Station', coordinate: [-83.051150, 42.329505], entrance: [-83.051032, 42.329415], neighborhood: 'West Downtown', restaurants: [] },
+  { id: 'huntington', name: 'Huntington Place Station', coordinate: [-83.049846, 42.328212], entrance: [-83.049867, 42.328406], neighborhood: 'Convention District', restaurants: [] },
+  { id: 'water-square', name: 'Water Square Station', coordinate: [-83.052671, 42.325233], entrance: [-83.052563, 42.325192], neighborhood: 'Riverfront', restaurants: [] },
+  { id: 'financial', name: 'Financial District Station', coordinate: [-83.046691, 42.328680], entrance: [-83.046507, 42.328756], neighborhood: 'Financial District', restaurants: [] },
+  { id: 'millender', name: 'Millender Center Station', coordinate: [-83.042001, 42.330273], entrance: [-83.042146, 42.330326], neighborhood: 'Civic Center', restaurants: [] },
+  { id: 'renaissance', name: 'Renaissance Center Station', coordinate: [-83.039983, 42.330157], entrance: [-83.040065, 42.329918], neighborhood: 'Riverfront', restaurants: [] },
+  { id: 'bricktown', name: 'Bricktown Station', coordinate: [-83.041194, 42.333326], entrance: [-83.041262, 42.333473], neighborhood: 'Bricktown', restaurants: [] },
+  { id: 'greektown', name: 'Greektown Station', coordinate: [-83.042419, 42.334617], entrance: [-83.042320, 42.334693], neighborhood: 'Greektown', restaurants: [] },
+  { id: 'cadillac', name: 'Cadillac Center Station', coordinate: [-83.046157, 42.333710], entrance: [-83.046330, 42.333644], neighborhood: 'Cadillac Square', restaurants: [] },
+  { id: 'broadway', name: 'Broadway Station', coordinate: [-83.048213, 42.335449], entrance: [-83.048179, 42.335569], neighborhood: 'Broadway', restaurants: [] },
+  { id: 'grand-circus', name: 'Grand Circus Park Station', coordinate: [-83.050592, 42.335782], entrance: [-83.050629, 42.335804], neighborhood: 'Grand Circus Park', restaurants: [] },
+  { id: 'times-square', name: 'Times Square Station', coordinate: [-83.052159, 42.333579], entrance: [-83.051904, 42.333594], neighborhood: 'West Downtown', restaurants: [] },
 ];
 
 export const qlineStops: { name: string; coordinate: Coordinate }[] = [
@@ -71,7 +73,7 @@ export function milesBetween(a: Coordinate, b: Coordinate) {
 
 // Walking distance approximated as straight-line × 1.25 for Detroit's street grid.
 export function nearbyRestaurants(station: Station) {
-  return restaurants.map(p => ({ ...p, walkMiles: milesBetween(station.coordinate, p.coordinate) * 1.25 }))
+  return restaurants.map(p => ({ ...p, walkMiles: milesBetween(station.entrance, p.coordinate) * 1.25 }))
     .filter(p => p.walkMiles <= 0.5).sort((a, b) => a.walkMiles - b.walkMiles).slice(0, 5);
 }
 
