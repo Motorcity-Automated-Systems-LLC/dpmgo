@@ -11,6 +11,7 @@ const route = (coordinates: Coordinate[]): GeoJSON.Feature<GeoJSON.LineString> =
 const qPath = qlineStops.map(s => s.coordinate);
 const routeData = (coordinates: Coordinate[]): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [route(coordinates)] });
 const dotData = (coordinate: Coordinate): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: [point(coordinate)] });
+const downtownCenter: Coordinate = [-83.0458, 42.3314];
 
 // This is a visual simulation, not a feed of real vehicle positions. Each stop holds for 12 seconds.
 function simulatedPosition(path: Coordinate[], elapsed: number, loop: boolean): Coordinate {
@@ -40,7 +41,7 @@ function simulatedMoverPosition(elapsed: number): Coordinate {
   const startIndex = moverStopIndexes[phase] ?? 0;
   const nextStopIndex = moverStopIndexes[(phase + 1) % moverStopIndexes.length] ?? 0;
   const endIndex = nextStopIndex > startIndex ? nextStopIndex : nextStopIndex + peopleMoverShape.length - 1;
-  const points = Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => peopleMoverShape[(startIndex + offset) % (peopleMoverShape.length - 1)] ?? peopleMoverShape[0] ?? [-83.0458, 42.3314]);
+  const points: Coordinate[] = Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => peopleMoverShape[(startIndex + offset) % (peopleMoverShape.length - 1)] ?? peopleMoverShape[0] ?? downtownCenter);
   const segmentLengths = points.slice(1).map((coordinate, index) => coordinateDistance(points[index] ?? coordinate, coordinate));
   const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
   const target = totalLength * progress;
@@ -49,13 +50,13 @@ function simulatedMoverPosition(elapsed: number): Coordinate {
     const length = segmentLengths[index] ?? 0;
     if (covered + length >= target) {
       const localProgress = length === 0 ? 0 : (target - covered) / length;
-      const from = points[index] ?? points[0] ?? [-83.0458, 42.3314];
+      const from = points[index] ?? points[0] ?? downtownCenter;
       const to = points[index + 1] ?? from;
-      return [from[0] + (to[0] - from[0]) * localProgress, from[1] + (to[1] - from[1]) * localProgress];
+      return [from[0] + (to[0] - from[0]) * localProgress, from[1] + (to[1] - from[1]) * localProgress] as Coordinate;
     }
     covered += length;
   }
-  return points[points.length - 1] ?? [-83.0458, 42.3314];
+  return points[points.length - 1] ?? downtownCenter;
 }
 
 export default function TransitMap({ peopleMover, qline, selectedId, onSelect, onReady, restaurantId }: Props) {
