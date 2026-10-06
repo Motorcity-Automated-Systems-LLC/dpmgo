@@ -1,6 +1,6 @@
 // Detroit Transportation Corporation public GTFS, shapes.txt, shape_id qo5n.
 // https://hosted-gtfs-feeds.s3.amazonaws.com/DPM/gtfs.zip
-import type { Coordinate } from "./transit";
+type Coordinate = [number, number];
 export const peopleMoverShape: Coordinate[] = [
   [-83.052159, 42.333579],
   [-83.052236, 42.333146],

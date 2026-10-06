@@ -85,6 +85,7 @@ h1 { margin: 22px 0 14px; font-size: clamp(42px, 4.4vw, 75px); line-height: 1.02
 .restaurant-price { flex: none; }
 .restaurant-arrow { flex: none; padding: 12px 4px; }
 .thumbnail-credit { margin: 8px 0 0; font: 400 9px var(--font-mono); color: var(--muted-foreground); }
+.mapboxgl-ctrl-top-right { top: 70px; right: 10px; }
 .legal-dialog { background: var(--card); border-color: var(--border); color: var(--foreground); width: min(92vw, 620px); max-width: 620px; max-height: 85dvh; overflow-y: auto; }
 .legal-dialog h2 { color: var(--primary); }
 .legal-copy { font-size: 13px; line-height: 1.65; color: var(--muted-foreground); }
