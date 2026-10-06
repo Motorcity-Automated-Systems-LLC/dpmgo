@@ -1,70 +1,69 @@
 # DPM - Go!
 
-Build a mobile-first, high-performance transit utility web app called "DPM - Go!" for Motorcity Automated Systems, designed for Detroit transit riders. 
+**DPM - Go!** is an advanced, mobile-first downtown transit utility application engineered by **Detroit Core Automationc LLC** the in-house software development entity housed under **Motorcity Automated Systems**. Designed specifically to remove friction from urban mobility, the app unifies Detroit's core transit arteries—the 2.9-mile elevated Detroit People Mover (DPM) loop and the QLine streetcar corridor—into a singular, zero-friction interface.
+
+The core mission of DPM - Go! is to encourage tourists, commuters, and residents to "park once" (or ditch personal vehicles entirely) and explore downtown destinations, local dining, and major sports/entertainment events completely on foot.
+
+---
+
+## Core Features & Architectural Pillars
 
 ### 1. UI & Visual Architecture
 
-- **Theme & Aesthetic:** Dark mode, high-contrast, futuristic urban transport HUD. Deep charcoal/navy backgrounds (#070B14), glowing neon-cyan transit lines (#00F0FF), and frosted glassmorphism containers (backdrop-blur-xl bg-slate-900/80 border border-cyan-500/30).
-
-- **Header & Navigation:** Brand name "DPM - Go!" with pill-style live toggle switches for "PEOPLE MOVER" and "QLINE", plus a top dropdown menu for viewing downtown activity calendars, sports schedules, and multi-source event feeds.
+* **Sci-Fi HUD Canvas:** Replaces generic map templates with a custom dark-mode interface (`#070B14`), 3D isometric building extrusions (such as the Renaissance Center), and glowing neon-cyan transit loops (`#00F0FF`).
+* **Zero-Login Friction:** Instantaneous mobile launch without requiring user accounts, password walls, or onboarding friction—essential for outdoor platform use.
+* **Header & Navigation:** Features brand identity with pill-style live toggle switches for **"PEOPLE MOVER"** and **"QLINE"**, alongside a top dropdown menu for viewing activity calendars, sports schedules, and event feeds.
 
 ### 2. 3D Satellite Map Canvas & Telemetry
 
-- **Mapbox Integration:** Initialize Mapbox GL JS using `mapbox://styles/mapbox/satellite-streets-v12`. Ensure `mapbox-gl/dist/mapbox-gl.css` is imported and `mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN`. Center on downtown Detroit `[-83.0458, 42.3314]` with a zoom of `15.5` and a pitch of `50` degrees for 3D isometric building extrusions (e.g., Renaissance Center).
-
-MAPBOX DEFAULT ACCESS TOKEN : pk.eyJ1Ijoic2VwaDA3IiwiYSI6ImNtdXJlemRzdDBsbGIyem9lM3FiMjNybTgifQ.L5t2LjoKXMStl9gL-837Nw
-
-- **Vehicle Simulation:** Program an animated vehicle tracking dot that moves smoothly along the 2.9-mile counter-clockwise single-track loop and QLine corridor, pacing through station stops with 12-second pauses.
+* **Mapbox Integration:** Initialized using `mapbox://styles/mapbox/satellite-streets-v12`. Centered on downtown Detroit (`[-83.0458, 42.3314]`) with a zoom of `15.5`, a pitch of `50` degrees, and a bearing of `-20` degrees for an immersive 3D isometric view.
+* **Live Telemetry & Vehicle Simulation:** Integrates real-time data feeds to power live vehicle tracking dots and arrival countdowns, pacing smoothly along the single-track loop and QLine corridor.
 
 ### 3. The 13 People Mover Stations & Contextual Drawers
 
-Map all 13 official Detroit People Mover stations in exact sequential order:
+The app maps all 13 official Detroit People Mover stations in exact sequential order:
 
 1. Michigan Station
-
 2. Fort / Cass Station
-
 3. Huntington Place Station
-
 4. Water Square Station
-
 5. Financial District Station
-
 6. Millender Center Station
-
 7. Renaissance Center Station
-
 8. Bricktown Station
-
 9. Greektown Station
-
 10. Cadillac Center Station
-
 11. Broadway Station
-
 12. Grand Circus Park Station
-
 13. Times Square Station
 
-- **Station Drawers:** When a user taps any station pin or list item, slide up a glassmorphism bottom drawer displaying live status, walking metrics, and a curated list of verified local restaurants within walking distance, complete with price tiers and active external links.
+* **Contextual Station Drawers:** Tapping any station pin or scrollable list item slides up a glassmorphism bottom drawer displaying hours of operation, active status alerts, walking metrics, and verified local dining options complete with price tiers (`$–$$$$`) and direct external links.
 
-### 4. Footer Branding Stamp
+### 4. Interactive Filters & Future Scalability
 
-- Fixed bottom compliance footer: 
+* **Sports & Activity Feeds:** Surfaces upcoming home games for Detroit teams (Lions, Tigers, Red Wings, Pistons) and downtown-exclusive public event schedules.
+* **Regional Scalability:** Built with architectural placeholders to incorporate future regional commuter links, such as the D2A2 (Detroit-to-Ann Arbor) express.
 
-  "MOTORCITY AUTOMATED SYSTEMS · DPM - Go! Building Targeted Autonomous Solutions for Detroit"
+### 5. Footer Compliance Stamp
 
-This project was built with [Lovable](https://lovable.dev).
+Fixed bottom compliance footer:
 
-**Live app**: https://dpmgo.lovable.app
+`MOTORCITY AUTOMATED SYSTEMS · DPM - Go! Building Targeted Autonomous Solutions for Detroit`
 
-## Build with Lovable
+---
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/247f0bf3-491c-5d0c-b483-30208cfabc7d).
+## Environment Configuration
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
+To run the Mapbox 3D satellite canvas correctly, configure your environment variables:
+
+```env
+VITE_MAPBOX_TOKEN=pk.eyJ1Ijoic2VwaDA3IiwiYSI6ImNtdXJlemRzdDBsbGIyem9lM3FiMjNybTgifQ.L5t2LjoKXMStl9gL-837Nw
+
+```
+
+Ensure `mapbox-gl/dist/mapbox-gl.css` is properly imported in your project entry file.
+
+---
 
 ## Development
 
@@ -75,4 +74,11 @@ git clone <this-repository-url>
 cd <repository-name>
 npm i
 npm run dev
+
 ```
+
+---
+
+*Project built with [Lovable](https://lovable.dev).*
+
+**Live app**: [https://dpmgo.lovable.app](https://dpmgo.lovable.app)
