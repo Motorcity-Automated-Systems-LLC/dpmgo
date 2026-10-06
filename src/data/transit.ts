@@ -1,4 +1,5 @@
 export type Coordinate = [number, number];
+export { peopleMoverShape } from './peopleMoverShape';
 export type Restaurant = { name: string; category: string; price: string; url: string };
 export type Station = { id: string; name: string; coordinate: Coordinate; entrance: Coordinate; neighborhood: string; restaurants: Restaurant[] };
 

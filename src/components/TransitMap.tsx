@@ -2,8 +2,7 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type * as GeoJSON from 'geojson';
-import { peopleMoverStations, qlineStops, restaurants, type Coordinate } from '@/data/transit';
-import { peopleMoverShape } from '@/data/peopleMoverShape';
+import { peopleMoverShape, peopleMoverStations, qlineStops, restaurants, type Coordinate } from '@/data/transit';
 
 type Props = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
 type Point = GeoJSON.Feature<GeoJSON.Point>;
