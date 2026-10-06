@@ -12,3 +12,4 @@
 - Keep transit route data and nearby place links in `src/data/transit.ts` so the map and station drawers share one station order.
 - Render Mapbox only after browser hydration because Mapbox GL depends on browser APIs during module evaluation.
 - Label animated vehicle positions as simulations until a verified live transit feed is connected, to avoid misleading riders.
+- Drive the People Mover simulation along the agency GTFS shape and use platform coordinates as its dwell points.

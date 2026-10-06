@@ -9,5 +9,5 @@
 - [x] Correct all 13 station locations from the agency's public GTFS feed.
 - [x] Add the official People Mover link and restaurant location thumbnails.
 - [x] Add legal terms/privacy and an opening logo animation.
-- [ ] Keep the People Mover simulation exactly on the agency route shape.
-- [ ] Add opt-in user location tracking to the map.
+- [x] Keep the People Mover simulation exactly on the agency route shape.
+- [x] Add opt-in user location tracking to the map.
