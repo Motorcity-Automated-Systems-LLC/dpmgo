@@ -13,3 +13,4 @@
 - Render Mapbox only after browser hydration because Mapbox GL depends on browser APIs during module evaluation.
 - Label animated vehicle positions as simulations until a verified live transit feed is connected, to avoid misleading riders.
 - Drive the People Mover simulation along the agency GTFS shape and use platform coordinates as its dwell points.
+- Keep fleet timing in a pure simulation module and gate People Mover movement through the shared GTFS service calendar, including after-midnight trips, so movement cannot imply off-hours service.

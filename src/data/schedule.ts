@@ -20,6 +20,21 @@ export function servicesOn(ymd: string) {
   return [...active];
 }
 
+// System-wide windows, including special calendars and yesterday's trips after midnight.
+const serviceWindows = Object.fromEntries(Object.entries(schedule.departures).map(([id, stops]) => {
+  const times = Object.values(stops).flat();
+  return [id, times.length ? { start: Math.floor(Math.min(...times) / 60) * 60, end: Math.max(...times) + 1 } : null];
+}));
+
+export function peopleMoverServiceRunning(now = new Date()): boolean {
+  const { ymd, seconds } = detroitNow(now);
+  return [-1, 0].some(offset => servicesOn(shiftDate(ymd, offset)).some(id => {
+    const window = serviceWindows[id];
+    const time = seconds - offset * 86400;
+    return window != null && time >= window.start && time < window.end;
+  }));
+}
+
 const fmt = (ymd: string, seconds: number) => {
   const h = Math.floor(seconds / 3600) % 24, m = Math.floor(seconds / 60) % 60;
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
