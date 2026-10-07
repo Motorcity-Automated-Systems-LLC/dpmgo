@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import type * as GeoJSON from 'geojson';
+import { peopleMoverServiceRunning } from '@/data/schedule';
+import { simulatedMoverPositions } from '@/data/trainSimulation';
 import { peopleMoverShape, peopleMoverStations, qlineStops, restaurants, type Coordinate } from '@/data/transit';
 
 type Props = { peopleMover: boolean; qline: boolean; selectedId: string | null; onSelect: (id: string) => void; onReady?: (ready: boolean) => void; restaurantId?: string | null };
@@ -27,43 +29,10 @@ function simulatedPosition(path: Coordinate[], elapsed: number, loop: boolean): 
   return [a[0] + (b[0] - a[0]) * progress, a[1] + (b[1] - a[1]) * progress];
 }
 
-const coordinateDistance = (a: Coordinate, b: Coordinate) => Math.hypot((b[0] - a[0]) * Math.cos(a[1] * Math.PI / 180), b[1] - a[1]);
-const moverStopIndexes = peopleMoverStations
-  .map(station => peopleMoverShape.slice(0, -1).reduce((best, coordinate, index) => coordinateDistance(coordinate, station.coordinate) < coordinateDistance(peopleMoverShape[best] ?? coordinate, station.coordinate) ? index : best, 0))
-  .sort((a, b) => a - b);
-
-// Moves only across published GTFS shape segments, pausing at each platform for 12 seconds.
-function simulatedMoverPosition(elapsed: number): Coordinate {
-  const dwell = 12000;
-  const travel = 11000;
-  const phase = Math.floor(elapsed / (dwell + travel)) % moverStopIndexes.length;
-  const progress = Math.max(0, Math.min(1, (elapsed % (dwell + travel) - dwell) / travel));
-  const startIndex = moverStopIndexes[phase] ?? 0;
-  const nextStopIndex = moverStopIndexes[(phase + 1) % moverStopIndexes.length] ?? 0;
-  const endIndex = nextStopIndex > startIndex ? nextStopIndex : nextStopIndex + peopleMoverShape.length - 1;
-  const points: Coordinate[] = Array.from({ length: endIndex - startIndex + 1 }, (_, offset) => peopleMoverShape[(startIndex + offset) % (peopleMoverShape.length - 1)] ?? peopleMoverShape[0] ?? downtownCenter);
-  const segmentLengths = points.slice(1).map((coordinate, index) => coordinateDistance(points[index] ?? coordinate, coordinate));
-  const totalLength = segmentLengths.reduce((sum, length) => sum + length, 0);
-  const target = totalLength * progress;
-  let covered = 0;
-  for (let index = 0; index < segmentLengths.length; index += 1) {
-    const length = segmentLengths[index] ?? 0;
-    if (covered + length >= target) {
-      const localProgress = length === 0 ? 0 : (target - covered) / length;
-      const from = points[index] ?? points[0] ?? downtownCenter;
-      const to = points[index + 1] ?? from;
-      return [from[0] + (to[0] - from[0]) * localProgress, from[1] + (to[1] - from[1]) * localProgress] as Coordinate;
-    }
-    covered += length;
-  }
-  return points[points.length - 1] ?? downtownCenter;
-}
-
 export default function TransitMap({ peopleMover, qline, selectedId, onSelect, onReady, restaurantId }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
   const onSelectRef = useRef(onSelect);
-  const startRef = useRef<number | null>(null);
   const enabledRef = useRef({ peopleMover, qline });
   onSelectRef.current = onSelect;
   enabledRef.current = { peopleMover, qline };
@@ -93,11 +62,27 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
       map.addLayer({ id: 'station-labels', type: 'symbol', source: 'stations', layout: { 'text-field': ['get', 'name'], 'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'], 'text-size': 11, 'text-offset': [0, 1.45], 'text-anchor': 'top', 'text-optional': true }, paint: { 'text-color': '#eafaff', 'text-halo-color': '#07131b', 'text-halo-width': 1.5 } });
       map.addSource('qline-stops', { type: 'geojson', data: { type: 'FeatureCollection', features: qlineStops.map(s => point(s.coordinate)) } });
       map.addLayer({ id: 'qline-stops', type: 'circle', source: 'qline-stops', paint: { 'circle-radius': 4, 'circle-color': '#ffbb70', 'circle-stroke-color': '#07131b', 'circle-stroke-width': 1.5 } });
-       map.addSource('mover-vehicle', { type: 'geojson', data: dotData(peopleMoverShape[0] ?? [-83.0536, 42.3323]) });
+      const moverData = (elapsed: number): GeoJSON.FeatureCollection => ({ type: 'FeatureCollection', features: simulatedMoverPositions(elapsed).map(point) });
+      map.addSource('mover-vehicle', { type: 'geojson', data: moverData(0) });
+      const pixels = new Uint8Array(20 * 10 * 4);
+      for (let y = 1; y < 9; y += 1) for (let x = 1; x < 19; x += 1) {
+        const i = (y * 20 + x) * 4;
+        pixels[i] = 255; pixels[i + 1] = 255; pixels[i + 2] = 255; pixels[i + 3] = 255;
+      }
+      map.addImage('train-rectangle', { width: 20, height: 10, data: pixels }, { sdf: true });
+      const tokenColor = (token: string) => {
+        const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+        const context = canvas.getContext('2d');
+        if (!context) return 'transparent';
+        context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue(token).trim();
+        context.fillRect(0, 0, 1, 1);
+        const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
+        return `rgb(${r}, ${g}, ${b})`;
+      };
       map.addSource('qline-vehicle', { type: 'geojson', data: dotData(qPath[0] ?? [-83.0445, 42.3295]) });
-      for (const [id, color] of [['mover-vehicle', '#00f0ff'], ['qline-vehicle', '#ffbb70']] as const) {
+      for (const [id, color] of [['mover-vehicle', tokenColor('--primary')], ['qline-vehicle', tokenColor('--warm')]] as const) {
         map.addLayer({ id: `${id}-glow`, type: 'circle', source: id, paint: { 'circle-radius': 19, 'circle-color': color, 'circle-opacity': 0.24, 'circle-blur': 0.65 } });
-        map.addLayer({ id, type: 'circle', source: id, paint: { 'circle-radius': 7, 'circle-color': color, 'circle-stroke-color': '#07131b', 'circle-stroke-width': 2 } });
+        map.addLayer({ id, type: 'symbol', source: id, layout: { 'icon-image': 'train-rectangle', 'icon-size': 1, 'icon-allow-overlap': true, 'icon-ignore-placement': true }, paint: { 'icon-color': color, 'icon-halo-color': tokenColor('--background'), 'icon-halo-width': 1 } });
       }
       map.addSource('restaurant-pin', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({ id: 'restaurant-pin-glow', type: 'circle', source: 'restaurant-pin', paint: { 'circle-radius': 22, 'circle-color': '#ff4fd8', 'circle-opacity': 0.25, 'circle-blur': 0.6 } });
@@ -117,12 +102,23 @@ export default function TransitMap({ peopleMover, qline, selectedId, onSelect, o
        }
       onReady?.(true);
       let lastUpdate = 0;
+      let lastTime: number | null = null;
+      let moverElapsed = 0;
+      let qlineElapsed = 0;
+      let running = peopleMoverServiceRunning();
+      let lastServiceCheck = 0;
       const animate = (time: number) => {
-        if (startRef.current === null) startRef.current = time;
+        const delta = lastTime === null ? 0 : Math.min(time - lastTime, 1000);
+        lastTime = time;
+        if (time - lastServiceCheck >= 1000) {
+          running = peopleMoverServiceRunning();
+          lastServiceCheck = time;
+        }
+        if (running) moverElapsed += delta;
+        qlineElapsed += delta;
         if (time - lastUpdate > 50) {
-          const elapsed = time - startRef.current;
-           (map.getSource('mover-vehicle') as mapboxgl.GeoJSONSource)?.setData(dotData(simulatedMoverPosition(elapsed)));
-          (map.getSource('qline-vehicle') as mapboxgl.GeoJSONSource)?.setData(dotData(simulatedPosition(qPath, elapsed, false)));
+          if (running) (map.getSource('mover-vehicle') as mapboxgl.GeoJSONSource)?.setData(moverData(moverElapsed));
+          (map.getSource('qline-vehicle') as mapboxgl.GeoJSONSource)?.setData(dotData(simulatedPosition(qPath, qlineElapsed, false)));
           lastUpdate = time;
         }
         frame = requestAnimationFrame(animate);
