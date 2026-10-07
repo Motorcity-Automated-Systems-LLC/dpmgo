@@ -11,3 +11,4 @@
 - [x] Add legal terms/privacy and an opening logo animation.
 - [x] Keep the People Mover simulation exactly on the agency route shape.
 - [x] Add opt-in user location tracking to the map.
+- [ ] Show two rectangular simulated trains with realistic loop timing and official schedule-hours gating.
