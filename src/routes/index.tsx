@@ -6,6 +6,7 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } f
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { peopleMoverStations, nearbyRestaurants, sportsTeams, activities, type Station } from '@/data/transit';
+import { stationSchedule } from '@/data/schedule';
 import logo from '@/assets/dpm-go-logo.jpg.asset.json';
 
 const diningImages = import.meta.glob<{ url: string }>('/src/assets/dining/*.asset.json', { eager: true, import: 'default' });
@@ -169,12 +170,20 @@ function StationDetails({ station, restaurantId, onRestaurant }: { station: Stat
   const a = Math.sin(latDifference / 2) ** 2 + Math.cos(42.3316 * radians) * Math.cos(station.entrance[1] * radians) * Math.sin(lonDifference / 2) ** 2;
   const walkingMiles = 3958.8 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)) * 1.3;
   const walkingMinutes = Math.max(1, Math.round(walkingMiles * 20));
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => { const t = window.setInterval(() => setNow(new Date()), 30000); return () => window.clearInterval(t); }, []);
+  const sched = stationSchedule(station.id, now);
   return <div className="detail-content">
     <DrawerHeader className="detail-heading"><div className="drawer-eyebrow"><span className="signal-dot" /> PEOPLE MOVER <span className="detail-divider">/</span> STATION {String(number).padStart(2, '0')}</div><DrawerTitle>{station.name}</DrawerTitle><DrawerDescription>{station.neighborhood}, Detroit</DrawerDescription></DrawerHeader>
-    <div className="detail-stats"><div><span>WALK FROM CAMPUS MARTIUS*</span><strong>{walkingMinutes} <small>min · ~{walkingMiles.toFixed(1)} mi</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>ARRIVALS</span><strong className="arrival-unavailable">Not available</strong></div></div>
+    <div className="detail-stats"><div><span>WALK FROM CAMPUS MARTIUS*</span><strong>{walkingMinutes} <small>min · ~{walkingMiles.toFixed(1)} mi</small></strong></div><div><span>NEXT STOP</span><strong className="next-stop">{next.name}</strong></div><div><span>SERVICE NOW</span><strong className={sched.running ? 'next-stop' : 'arrival-unavailable'}>{sched.running ? 'Running' : 'Not running'}{sched.specialToday ? ' · Special event' : ''}</strong></div></div>
+    <div className="detail-body"><div className="detail-section-title"><span>NEXT TRAINS · SCHEDULED</span><span>OFFICIAL TIMETABLE</span></div>
+      {sched.trains.length ? <div className="restaurant-list">{sched.trains.map((t, i) => <div key={i} className="restaurant-item"><span className="restaurant-icon"><Clock3 size={16}/></span><span className="restaurant-main"><strong>{t.time}{t.day ? ` · ${t.day}` : ''}</strong><small>{t.minutes < 1 ? 'Due now' : t.minutes < 120 ? `in ${t.minutes} min` : 'Next service day'}</small></span></div>)}</div> : <p className="detail-note">No scheduled trains found.</p>}
+      {sched.specialDays.length > 0 && <p className="detail-note">Special-event service: {sched.specialDays.join(', ')}.</p>}
+      <p className="detail-note">Times come from the official People Mover schedule and are not live. Trains may run early, late or not at all.</p>
+    </div>
     <div className="detail-body"><div className="detail-section-title"><span>NEAR THIS STATION</span><span>LOCAL SPOTS ↗</span></div><p className="detail-note">Tap a spot to pin it on the map. Distances are walking estimates from this station entrance, not routed directions; times and business hours vary.</p><div className="restaurant-list">{nearby.map(r => <div key={r.id} className={`restaurant-item ${restaurantId === r.id ? 'station-selected' : ''}`}><Button type="button" variant="ghost" className="restaurant-select" onClick={() => onRestaurant(r.id)} aria-label={`Show ${r.name} on map`}><span className="restaurant-thumb">{diningImage(r.id) ? <img src={diningImage(r.id)} alt={`Map thumbnail of ${r.name}`} loading="lazy" /> : <MapPin size={17}/>}</span><span className="restaurant-main"><strong>{r.name}</strong><small>{r.category} · {r.walkMiles.toFixed(2)} mi · ~{Math.max(1, Math.round(r.walkMiles * 20))} min walk</small></span><span className="restaurant-price">{r.price}</span></Button><a href={r.url} target="_blank" rel="noopener noreferrer" aria-label={`${r.name} website`} className="restaurant-arrow"><ExternalLink size={15} /></a></div>)}</div><p className="thumbnail-credit">Thumbnail maps © Mapbox © OpenStreetMap</p>
       <div className="station-actions"><Button variant="hudActive" asChild><a href={mapsUrl} target="_blank" rel="noopener noreferrer"><Navigation2 size={16}/> WALKING DIRECTIONS <ExternalLink size={13}/></a></Button><div className="coordinates"><Compass size={14}/>{station.coordinate[1].toFixed(4)}° N, {Math.abs(station.coordinate[0]).toFixed(4)}° W</div></div>
     </div>
-    <div className="detail-disclaimer"><Clock3 size={13}/> *Walk is an estimate, not a routed trip. Vehicle markers are simulated; live arrivals are not connected.</div>
+    <div className="detail-disclaimer"><Clock3 size={13}/> *Walk is an estimate, not a routed trip. Train times are scheduled, not live. Vehicle markers are simulated.</div>
   </div>;
 }
